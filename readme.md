@@ -237,3 +237,5 @@ game assets and requires a legitimate copy of the game.
 Credits:
 
 Archie - https://github.com/ArchieGoldmill
+Cipher - https://github.com/CiPH3R-88
+Boris Vorontsov - https://www.enbdev.com/
