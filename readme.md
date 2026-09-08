@@ -39,8 +39,8 @@ underneath. It does not change art, effects or gameplay.
 
 ## Install
 
-1. Copy `d3d9.dll` and `MW4Real.ini` into the folder containing `speed.exe`.
-2. Set `Backend` in `MW4Real.ini`.
+1. Copy `d3d9.dll` and `MWDX.ini` into the folder containing `speed.exe`.
+2. Set `Backend` in `MWDX.ini`.
 3. Play.
 
 To uninstall, delete those two files. Nothing else is touched.
@@ -57,30 +57,48 @@ To uninstall, delete those two files. Nothing else is touched.
 ; 1 = DirectX 9   the original renderer, passed through untouched
 ; 2 = DirectX 11
 ; 3 = DirectX 12
-Backend=2
+Backend=3
 ```
 
-| Backend | Use it when |
-|---|---|
-| **1 — DirectX 9** | You want the game exactly as it shipped, or you're establishing a baseline to compare against. |
-| **2 — DirectX 11** | The broadly recommended choice. Excellent compatibility across a wide range of hardware. |
-| **3 — DirectX 12** | Newest hardware and drivers, and the lowest CPU overhead of the three. |
+| Backend | State | Use it when |
+|---|---|---|
+| **1 — DirectX 9** | Complete | You want the game exactly as it shipped, or you're establishing a baseline to compare against. |
+| **2 — DirectX 11** | One known defect — see below | Your GPU or driver can't give you DirectX 12, and you can do without the HUD gauges. |
+| **3 — DirectX 12** | Complete | **The recommended choice.** Newest hardware and drivers, the lowest CPU overhead of the three, and the whole game renders correctly. |
 
 If your machine can't provide the renderer you asked for, MWDX falls back to one
 it can and records why in the log rather than failing to launch.
+
+### Known issue — DirectX 11 HUD gauges
+
+`Backend=2` runs the entire game and is fully playable: world, cars, traffic,
+effects, menus, races, pursuits and the free-roam map all render and behave
+correctly. One thing does not:
+
+- the **speedometer needle** and the **live speed digits** don't draw
+- the **minimap contents** — roads, blips, the player arrow — don't draw
+
+The dial frames, the glass overlay and the minimap border are all still there;
+it's what goes inside them that's missing. Nothing else is affected, and it
+costs you no performance and no progress — you just can't read your speed or
+the minimap off the HUD.
+
+This is a bug in MWDX's DirectX 11 path, not in your setup, and no setting
+works around it. It does not occur on `Backend=1` or `Backend=3`. If the HUD
+matters to you, use `Backend=3`.
 
 ---
 
 ## Settings
 
-Everything lives in `MW4Real.ini`, next to the game executable. Settings are read
+Everything lives in `MWDX.ini`, next to the game executable. Settings are read
 at launch — change a value and restart.
 
 ### `[Renderer]`
 
 | Key | Default | What it does |
 |---|---|---|
-| `Backend` | `2` | Renderer to use: `1` DX9, `2` DX11, `3` DX12. |
+| `Backend` | `3` | Renderer to use: `1` DX9, `2` DX11, `3` DX12. |
 | `BorderlessFullscreen` | `1` | Serve fullscreen as a borderless window. Alt-tabs instantly. Recommended. |
 | `LowLatency` | `1` | Keep the queued-frame count short to reduce input lag. |
 | `HalfPixelFix` | `1` | Corrects a sub-pixel sampling difference between Direct3D 9 and later APIs. Leave on. |
@@ -95,16 +113,44 @@ looks without touching game files.
 
 | Key | Default | What it does |
 |---|---|---|
-| `ShaderDump` | `0` | Write the shaders MWDX generates into `MWDX\Shaders\Dumped`. Turn this on once to get files to work from. |
+| `ShaderDump` | `0` | Write the shaders MWDX generates into `MWDX\Shaders\Dumped`, so you have files to work from. |
 | `ShaderMods` | `0` | Load your edited shaders from `MWDX\Shaders`. |
 
-The workflow:
+**Set them both to `1` and leave them there.** They do different jobs and are
+meant to run together:
 
-1. Set `ShaderDump=1` and play the section of the game you want to change. MWDX
-   writes the shaders it used into `MWDX\Shaders\Dumped`, each one named after
-   the shader it came from.
-2. Copy a shader out of `Dumped` into `MWDX\Shaders`, and edit it.
-3. Set `ShaderMods=1` and `ShaderDump=0`, and restart.
+```ini
+ShaderDump=1
+ShaderMods=1
+```
+
+That gives you two folders next to the game:
+
+```
+MWDX\Shaders\           <- your edits go here
+MWDX\Shaders\Dumped\    <- MWDX writes the originals here, untouched
+```
+
+Then:
+
+1. **Play.** Every shader the game uses gets written into `Dumped`, named after
+   the shader it came from. Drive the part of the game you want to change —
+   only the shaders actually used show up, so this is also how you find the
+   one you're after.
+2. **Copy** a file out of `Dumped` into `MWDX\Shaders` one level up, and edit
+   your copy.
+3. **Restart.** MWDX now uses your version of that shader and the stock version
+   of everything else.
+
+Dumping only ever writes the *original* shader, and only into `Dumped`, so it
+can't overwrite your work — you always have a clean reference to go back to.
+Leave both keys on and steps 1–3 repeat as often as you like. Edits are read at
+launch, so restart the game each time you change a file.
+
+While either key is on, `ShaderDiskCache` is ignored for the run, so a cached
+copy of the original can never mask a shader you've edited. Loading is a little
+slower as a result; turn both off again when you're done and the cache comes
+back.
 
 A filename ending in `_v########` targets one variant of a shader; drop that
 suffix to apply your edit to every variant. Keep the entry point named `main`
@@ -124,7 +170,7 @@ cost real performance.
 
 | Key | Default | What it does |
 |---|---|---|
-| `VerboseLog` | `0` | Full diagnostic stream to `dx9to11.log`. |
+| `VerboseLog` | `0` | Full diagnostic stream to `MWDX-render.log`. |
 | `DebugLayer` | `0` | Graphics API validation layer. Slower, but names problems precisely. |
 | `GpuValidation` | `0` | Deeper GPU-side validation. **Much** slower. |
 | `PerfLog` | `0` | Periodic frame counters in the log. |
@@ -136,9 +182,9 @@ cost real performance.
 
 MWDX writes two files next to `speed.exe`:
 
-- **`MW4Real.log`** — short. Which renderer was requested, which is in use, and
+- **`MWDX.log`** — short. Which renderer was requested, which is in use, and
   why if those differ. Check this first.
-- **`dx9to11.log`** — the detailed stream. Warnings and errors always land here;
+- **`MWDX-render.log`** — the detailed stream. Warnings and errors always land here;
   `VerboseLog=1` adds full detail.
 
 When reporting a problem, attach both, say which `Backend` you used, and what
@@ -149,7 +195,7 @@ you were doing.
 ## Troubleshooting
 
 **The game started on the original renderer instead of the one I picked.**
-`MW4Real.log` records when MWDX couldn't provide the requested renderer and why.
+`MWDX.log` records when MWDX couldn't provide the requested renderer and why.
 Usually outdated GPU drivers.
 
 **The game won't start.**
@@ -163,7 +209,7 @@ silently. Send the file it names.
 
 **Performance is lower than expected.**
 Check `DebugLayer` and `GpuValidation` are both `0` — they're diagnostic tools
-and they're slow. Then check `dx9to11.log` for a line suggesting a larger
+and they're slow. Then check `MWDX-render.log` for a line suggesting a larger
 `UploadRingMB`.
 
 **Something looks subtly shifted.**
@@ -171,9 +217,10 @@ Try `HalfPixelFix=0` and compare. Either way, that comparison is useful in a
 report.
 
 **My shader mod isn't being used.**
-Check `ShaderMods=1`, that the file is in `MWDX\Shaders` and not `Dumped`, and
-that the filename still matches the shader it came from. `dx9to11.log` names
-every override it loads and every one that failed to compile.
+Check `ShaderMods=1`, that you restarted the game after saving, that the file is
+in `MWDX\Shaders` and not still down in `Dumped`, and that the filename still
+matches the shader it came from. `MWDX-render.log` names every override it loads
+and every one that failed to compile.
 
 ---
 
