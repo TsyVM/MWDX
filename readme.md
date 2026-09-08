@@ -236,4 +236,4 @@ game assets and requires a legitimate copy of the game.
 
 Credits:
 
-[Archie](ttps://github.com/ArchieGoldmill)
+Archie - https://github.com/ArchieGoldmill
