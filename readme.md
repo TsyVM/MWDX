@@ -233,3 +233,7 @@ and every one that failed to compile.
 Need for Speed: Most Wanted is © Electronic Arts. MWDX is an independent project,
 not affiliated with, endorsed by, or supported by Electronic Arts. It contains no
 game assets and requires a legitimate copy of the game.
+
+Credits:
+
+[Archie](ttps://github.com/ArchieGoldmill)
